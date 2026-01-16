@@ -1,7 +1,0 @@
-name=crisp-games
-author=abagames
-description=Classic arcade-like mini-games
-bundleID=com.abagames.crispgames
-version=1.1
-bundleNumber=2
-imagePath=card
