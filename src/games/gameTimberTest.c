@@ -117,11 +117,13 @@ static void update() {
         }
         text(intToChar(turnScore), 80, y);
       } else {
-        float pw1 = i - 1 < pc ? pieces[i - 1].size.x : 0;
-        float pw2 = i < pc ? pieces[i].size.x : 0;
-        int p = (pw1 == 0 && pw2 == 0) || i > cutCount
-                    ? 100
-                    : floorf(fabsf(pw1 - pw2) / (pw1 + pw2) * 300);
+        float pw1 = i - 1 < (int)pc ? pieces[i - 1].size.x : 0;
+        float pw2 = i < (int)pc ? pieces[i].size.x : 0;
+        int p = 100;
+        if (!((pw1 == 0 && pw2 == 0) || i > cutCount)) {
+          p = floorf(fabsf(pw1 - pw2) / (pw1 + pw2) * 300);
+        }
+
         text("-", 74, y);
         text(intToChar(p), 80, y);
         if (i == scoreCountIndex) {

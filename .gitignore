@@ -1,10 +1,7 @@
-node_modules/
-.vscode/
-package-lock.json
-build/
-src/cglpPlaydate/build/
-src/cglpPlaydate/build_arm/
-src/cglpPlaydate/crisp-games.pdx/
-src/cglpPlaydate/Source/pdex.bin
-src/cglpPlaydate/Source/pdex.dll
-src/cglpPlaydate/Source/pdex.elf
+obj/
+bin/
+src/gfx/*.c
+src/gfx/*.h
+src/gfx/*.8xv
+.DS_Store
+convimg.out
