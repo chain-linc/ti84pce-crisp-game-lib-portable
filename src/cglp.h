@@ -13,13 +13,13 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "machineDependent.h"
-#include "vector.h"
+#include "cglp/machineDependent.h"
+#include "cglp/vector.h"
 
 #define FPS 60
 
 #define COLOR_COUNT 17
-#define TRANSPARENT 17
+#define TRANSPARENT 255
 #define WHITE 0
 #define RED 1
 #define GREEN 2
@@ -39,8 +39,15 @@
 #define DARK_GREY 15
 #define LIGHT_GREY 16
 
+#define CHARACTER_OFFSET 32
+#define CHARACTER_FONTS 96
+
+#define CHARACTER_SPACING 6
 #define CHARACTER_WIDTH 6
 #define CHARACTER_HEIGHT 6
+
+#define GFX_CHARACTER_WIDTH 8
+#define GFX_CHARACTER_HEIGHT 8
 
 #define SOUND_EFFECT_TYPE_COUNT 9
 #define COIN 0
@@ -109,6 +116,7 @@ EXTERNC int ticks;
 EXTERNC float score;
 EXTERNC float difficulty;
 EXTERNC int color;
+EXTERNC char *colorGridChars;
 EXTERNC float thickness;
 EXTERNC float barCenterPosRatio;
 EXTERNC CharacterOptions characterOptions;
@@ -153,7 +161,7 @@ EXTERNC void updateFrame();
 
 //! Iterate over an `array` with variable `index`
 #define FOR_EACH(array, index) \
-  for (unsigned int index = 0; index < sizeof(array) / sizeof(array[0]); index++)
+  for (int index = 0; index < (int)(sizeof(array) / sizeof(array[0])); index++)
 //! Assign the `index` th item in the `array` to an `item` variable of `type`
 #define ASSIGN_ARRAY_ITEM(array, index, type, item) type *item = &array[index]
 //! Skip (continue) if the member `isAlive` of variable `item` is false.
@@ -164,7 +172,7 @@ EXTERNC void updateFrame();
 //! Count the number of items in the array for which the `isAlive` member is
 //! true and assigns it to a variable defined as the int variable `counter`
 #define COUNT_IS_ALIVE(array, counter)                                    \
-  unsigned int counter = 0;                                               \
+  int counter = 0;                                               \
   do {                                                                    \
     for (unsigned int i = 0; i < sizeof(array) / sizeof(array[0]); i++) { \
       if (array[i].isAlive) {                                             \
@@ -182,6 +190,6 @@ EXTERNC void updateFrame();
 //! Return 1 or -1 randomly
 #define RNDPM() (rndi(0, 2) * 2 - 1)
 
-#include "menu.h"
+#include "cglp/menu.h"
 
 #endif

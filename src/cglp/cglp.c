@@ -17,13 +17,9 @@ extern PlaydateAPI *pd;
 #include <string.h>
 
 #include "cglp.h"
-#include "machineDependent.h"
-#include "menu.h"
-#include "particle.h"
-#include "random.h"
-// #include "sound.h" ti84pce does not have sound
-#include "textPattern.h"
-#include "vector.h"
+#include "cglp/particle.h"
+#include "cglp/random.h"
+#include "cglp/textPattern.h"
 
 #define STATE_TITLE 0
 #define STATE_IN_GAME 1
@@ -147,7 +143,7 @@ static void addRect(bool isAlignCenter, float x, float y, float w, float h,
   if (h < 0) {
     y += h;
     h = -h;
-  } 
+  }
   if (hasCollision) {
     HitBox hb;
     hb.rectIndex = color;
@@ -345,8 +341,6 @@ static void initCharacter() {
   characterOptions.rotation = 0;
 }
 
-static char *colorGridChars = "wrgybpclRGYBPCL";
-
 static void setColorGrid(
     char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH + 1],
     unsigned char colorGrid[CHARACTER_HEIGHT][CHARACTER_WIDTH],
@@ -520,29 +514,16 @@ static void loadCurrentColorAndCharacterOptions() {
 // Sound
 //! Play a sound effect. Type are `COIN`, `LASER`, `EXPLOSION`, `POWER_UP`,
 //! `HIT`, `JUMP`, `SELECT`, `CLICK` and `RANDOM`.
-void play(int type) { (void)type; /* playSoundEffect(type); */ } // ti84pce does not have sound
+void play(int type) { (void)type; } // ti84pce does not have sound
 
 //! Enable playing background music and sound effects.
-void enableSound() { /* isSoundEnabled = true; */ } // ti84pce does not have sound
+void enableSound() {} // ti84pce does not have sound
 
 //! Disable playing background music and sound effects.
-void disableSound() {
-  /*
-  isSoundEnabled = false;
-  md_stopTone(); ti84pce does not have sound
-  */
-} // ti84pce does not have sound
+void disableSound() {} // ti84pce does not have sound
 
 //! Toggle sound playing flag.
-void toggleSound() {
-  /*
-  if (isSoundEnabled) {
-    disableSound();
-  } else {
-    enableSound();
-  }
-  */
-} // ti84pce does not have sound
+void toggleSound() {} // ti84pce does not have sound
 
 // Score
 static int prevScore;

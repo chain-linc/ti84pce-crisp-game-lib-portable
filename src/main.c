@@ -1,40 +1,31 @@
-#include <string.h>
+#include <string.h> // for memcpy()
+#include <time.h> // for clock()
+#include <keypadc.h> // for keypad input
+#include <graphx.h> // for graphics
+#include <debug.h> // for dbg_printf
 
-#include <debug.h>
+#include "cglp.h" // Crisp-Game-Lib-Portable
 
-#include <sys/timers.h>
-#include <keypadc.h>
-#include <graphx.h>
-
-#include "cglp.h"
-#include "machineDependent.h"
-
-//#define SPRITE_BUFFER_SIZE 64
 #define GFX_SPRITE_T_DATA_START 2
 #define CHARACTER_SIZE (CHARACTER_WIDTH * CHARACTER_HEIGHT)
 #define SPRITE_SIZE (GFX_SPRITE_T_DATA_START + CHARACTER_SIZE)
-#define TICKS2SECOND 533
+#define TICKS2FRAME (CLOCKS_PER_SEC / 60)
 /* xlibc is in format rrrbbggg */
 #define RGBToIndex(r, g, b) ((r & 0b11100000) | ((b >> 6) << 3) | (g >> 5)), 
 #define CHAR_RGBTO1555(r, g, b) (gfx_RGBTo1555(r, g, b) & 0xFF), ((gfx_RGBTo1555(r, g, b) >> 8) & 0xFF)
 
+char *colorGridChars = "wrgybpclRGYBPCLeE";
 
-unsigned int xOffset;
-unsigned int yOffset;
-unsigned int canvasWidth;
-unsigned int canvasHeight;
+static unsigned int xOffset;
+static unsigned int yOffset;
+static unsigned int canvasWidth;
+static unsigned int canvasHeight;
 
-double currentTicks = 0;
-double lastTicks = 0;
-bool fullRedraw = true;
+static double currentTicks = 0;
+static double lastTicks = 0;
+static bool fullRedraw = true;
 
-//unsigned char spriteBuffer[SPRITE_BUFFER_SIZE][CHARACTER_SIZE]; // buffer for sprite drawing
-//int spriteHashes[SPRITE_BUFFER_SIZE];                           // hashes for sprites in buffer
-//int spriteBufferIndex = 0;                                      // current index in sprite buffer
-//int spriteAllocatedSize = 0;                                    // size of cached sprites
-//int spriteAllocatedIndex = 0;                                   // index of current sprite within buffer
-
-unsigned char sprite[SPRITE_SIZE] = {CHARACTER_WIDTH, CHARACTER_HEIGHT}; // sprite for character drawing
+static unsigned char sprite[SPRITE_SIZE] = {CHARACTER_WIDTH, CHARACTER_HEIGHT}; // sprite for character drawing
 
 unsigned char palette[COLOR_COUNT * 2] = { \
     CHAR_RGBTO1555(255, 255, 255), /* WHITE */ \
@@ -73,51 +64,6 @@ void md_drawCharacter (
 
     memcpy(sprite + GFX_SPRITE_T_DATA_START, grid, CHARACTER_SIZE);
     gfx_Sprite((gfx_sprite_t *)sprite, (int)(x + xOffset), (int)(y + yOffset));
-
-    /*
-    spriteAllocatedIndex = -1;
-    for (int i = 0; i < spriteAllocatedSize; i++) {
-        if (spriteHashes[i] == hash) {
-            spriteAllocatedIndex = i;
-            break;
-        }
-    }
-
-    if (spriteAllocatedIndex == -1)
-    {
-        dbg_printf("Allocating character thats at (%f, %f) with hash %d at index %d\n", x, y, hash, spriteBufferIndex);
-        spriteHashes[spriteBufferIndex] = hash;
-        spriteBuffer[spriteBufferIndex][0] = CHARACTER_WIDTH;
-        spriteBuffer[spriteBufferIndex][1] = CHARACTER_HEIGHT;
-
-        for (int i = 0; i < CHARACTER_SIZE; i++)
-        {
-            // grid1D is in format RGB
-            spriteBuffer[spriteBufferIndex][GFX_SPRITE_T_DATA_START + i] =  RGBToPalette(grid1D[i + 0], grid1D[i + 1], grid1D[i + 2]);
-        }
-
-        // Update sprite buffer index and size
-        spriteAllocatedIndex = spriteBufferIndex;
-
-        // if overflow start deleting old buffer entries
-        if (++spriteBufferIndex >= SPRITE_BUFFER_SIZE)
-        {
-            dbg_printf("SpriteBufferIndex overflow\n");
-            spriteBufferIndex = 0;
-        }
-
-        // if overflow keep at same size
-        if (spriteAllocatedSize < SPRITE_BUFFER_SIZE)
-        {
-            spriteAllocatedSize++;
-        } else {
-            dbg_printf("Sprite cache full, overwriting old entries\n");
-        }
-    }
-
-    gfx_Sprite((gfx_sprite_t *)spriteBuffer[spriteAllocatedIndex], (int)(x + xOffset), (int)(y + yOffset));
-    */
-
 }
 
 void md_clearView(unsigned char color)
@@ -165,6 +111,7 @@ void md_initView(int w, int h)
 
 void md_consoleLog(char *msg)
 {
+    (void)msg;
     dbg_printf("%s", msg);
 }
 
@@ -179,10 +126,20 @@ int main(void)
     gfx_SetDrawBuffer();
 
     /* Set the palette for sprites */
-    gfx_SetPalette(palette, COLOR_COUNT * 2, 0);
-    /* Set a transparent color */
-    gfx_SetTransparentColor(TRANSPARENT);
+    //gfx_SetPalette(palette, COLOR_COUNT * 2, 0);
+    for (int i = 0; i < COLOR_COUNT; i++)
+    {
+        gfx_palette[(int)colorGridChars[i]] = palette[i * 2];
+    }
 
+    /* Set a transparent color */
+    gfx_SetTransparentColor(255);
+
+    //gfx_SetMonospaceFont(CHARACTER_SPACING);
+    //for (int i; i < CHARACTER_FONTS; i++)
+    //{
+    //    gfx_SetCharData(i + CHARACTER_OFFSET, font[i])
+    //}
 
     dbg_printf("initGame() start\n");
     /* Initialize the game */
@@ -191,17 +148,18 @@ int main(void)
 
     dbg_printf("starting loop\n");
 
-    bool menuWasJustEntered = false;
-    bool exit = false;
+    static bool menuWasJustEntered = false;
+    static bool exit = false;
     /* Check for clear key to exit */
     while (!exit)
     {
         /* Call update 60 times a second */
 
-        currentTicks = timer_Get(1) / TICKS2SECOND;
-        if (currentTicks < lastTicks + TICKS2SECOND)
+        currentTicks = clock() / TICKS2FRAME;
+        if (currentTicks < lastTicks + 1)
         {
-            dbg_printf("FPS: %f\n", 60 / (currentTicks - lastTicks));
+            dbg_printf("ticks %f, %f\n", currentTicks, lastTicks);
+            dbg_printf("FPS: %f\n", (double)(60 / (currentTicks - lastTicks)));
             lastTicks = currentTicks;
 
             /* Update game input state */
