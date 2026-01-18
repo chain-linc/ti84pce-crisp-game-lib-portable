@@ -43,4 +43,5 @@ Minimal C-lang library for creating classic arcade-like mini-games running on th
 - Exit [game selection menu] to Ti-OS - Clear Key
 
 ## Notes
+- speed is a issue most game run at 1/3 speed (most likly due to cglp collision detection overhead)
 - The sound functions are currently just stubs and sound timer will always return 0
